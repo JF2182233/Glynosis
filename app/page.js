@@ -11,10 +11,10 @@ const loadingSentences = [
 ];
 
 const presets = [
-  { id: "sleep", label: "Sleep" },
-  { id: "smoking", label: "Smoking" },
-  { id: "confidence", label: "Confidence" },
-  { id: "relaxation", label: "Relaxation" },
+  { id: "sleep", label: "Sleep", icon: "☾" },
+  { id: "smoking", label: "Smoking", icon: "⊘" },
+  { id: "confidence", label: "Confidence", icon: "✦" },
+  { id: "relaxation", label: "Relaxation", icon: "◌" },
 ];
 
 const howItWorksSteps = [
@@ -235,13 +235,13 @@ export default function Home() {
               return (
                 <button
                   key={preset.id}
-                  className={`preset-btn ${isActive ? "active" : ""}`}
+                  className={`preset-btn ${isActive ? "active" : ""} ${preset.id === "sleep" ? "preset-btn-sleep" : ""}`}
                   onClick={() => handlePlayPreset(preset.id)}
                   disabled={isGenerating}
                   aria-pressed={isActive}
                 >
                   <span className="preset-icon" aria-hidden="true">
-                    {isLoading ? "◌" : isActive ? "▮▮" : "▶"}
+                    {isLoading ? "◌" : isActive ? "▮▮" : preset.icon}
                   </span>
                   <span>{preset.label}</span>
                 </button>

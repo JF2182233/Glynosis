@@ -414,8 +414,15 @@ h1 {
 
 .preset-icon {
   width: 1.3rem;
+  height: 1.3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  font-size: 0.88rem;
+  line-height: 1;
+  font-size: 0.94rem;
+  font-family: "Inter", "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
+  font-variant-emoji: text;
   color: var(--primary);
 }
 
@@ -434,6 +441,15 @@ h1 {
 
 .preset-btn.active .preset-icon {
   color: #f3f6f8;
+}
+
+.preset-btn-sleep {
+  background: linear-gradient(145deg, rgba(102, 118, 255, 0.1), rgba(94, 225, 201, 0.08)) var(--surface-solid);
+  border-color: rgba(93, 126, 245, 0.26);
+}
+
+.preset-btn-sleep .preset-icon {
+  font-size: 1rem;
 }
 
 .preset-btn:disabled {
