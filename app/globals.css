@@ -414,8 +414,15 @@ h1 {
 
 .preset-icon {
   width: 1.3rem;
+  height: 1.3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  font-size: 0.88rem;
+  line-height: 1;
+  font-size: 0.94rem;
+  font-family: "Inter", "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
+  font-variant-emoji: text;
   color: var(--primary);
 }
 
@@ -442,7 +449,7 @@ h1 {
 }
 
 .preset-btn-sleep .preset-icon {
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 
 .preset-btn:disabled {

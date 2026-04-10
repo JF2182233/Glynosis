@@ -11,10 +11,10 @@ const loadingSentences = [
 ];
 
 const presets = [
-  { id: "sleep", label: "Sleep", icon: "🌙" },
-  { id: "smoking", label: "Smoking", icon: "🚭" },
-  { id: "confidence", label: "Confidence", icon: "✨" },
-  { id: "relaxation", label: "Relaxation", icon: "🫧" },
+  { id: "sleep", label: "Sleep", icon: "☾" },
+  { id: "smoking", label: "Smoking", icon: "⊘" },
+  { id: "confidence", label: "Confidence", icon: "✦" },
+  { id: "relaxation", label: "Relaxation", icon: "◌" },
 ];
 
 const howItWorksSteps = [
