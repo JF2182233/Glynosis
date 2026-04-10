@@ -145,12 +145,10 @@ export async function POST(req) {
     const isPcm = mimeType.toLowerCase().includes("audio/l16") || mimeType.toLowerCase().includes("audio/pcm");
     const audioBuffer = isPcm ? pcmToWav(rawAudioBuffer) : rawAudioBuffer;
 
-    return new NextResponse(audioBuffer, {
-      status: 200,
-      headers: {
-        "Content-Type": isPcm ? "audio/wav" : mimeType,
-        "Content-Length": audioBuffer.length.toString(),
-      },
+    return NextResponse.json({
+      transcript: script,
+      mimeType: isPcm ? "audio/wav" : mimeType,
+      audioBase64: audioBuffer.toString("base64"),
     });
   } catch (error) {
     console.error("Audio generation failed:", error);

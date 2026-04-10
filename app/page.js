@@ -21,12 +21,16 @@ export default function Home() {
   const [playingId, setPlayingId] = useState(null);
   const [audioState, setAudioState] = useState("idle");
   const [customInput, setCustomInput] = useState("");
+  const [transcript, setTranscript] = useState("");
+  const [currentAudioSrc, setCurrentAudioSrc] = useState("");
+  const [currentAudioLabel, setCurrentAudioLabel] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
   const [isInfoOpen, setIsInfoOpen] = useState(false);
 
   const audioRef = useRef(null);
+  const generatedUrlRef = useRef(null);
 
   useEffect(() => {
     let interval;
@@ -56,6 +60,44 @@ export default function Home() {
     }
   };
 
+  const clearGeneratedUrl = () => {
+    if (generatedUrlRef.current) {
+      URL.revokeObjectURL(generatedUrlRef.current);
+      generatedUrlRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      clearGeneratedUrl();
+    };
+  }, []);
+
+  const playSource = async ({ src, id, label, transcriptText = "" }) => {
+    if (!audioRef.current) return;
+
+    const player = audioRef.current;
+    player.src = src;
+    await player.play();
+
+    setPlayingId(id);
+    setCurrentAudioSrc(src);
+    setCurrentAudioLabel(label);
+    setTranscript(transcriptText);
+    setAudioState("playing");
+  };
+
+  const base64ToBlob = (base64Data, mimeType) => {
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+
+    for (let i = 0; i < binaryString.length; i += 1) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    return new Blob([bytes], { type: mimeType });
+  };
+
   const handlePlayPreset = async (presetId) => {
     setErrorMessage("");
 
@@ -67,31 +109,16 @@ export default function Home() {
     }
 
     stopCurrentAudio();
+    clearGeneratedUrl();
     setIsGenerating(false);
-    setPlayingId(presetId);
     setAudioState("loading_preset");
 
     try {
-      const newAudio = new Audio(`/audio/${presetId}.wav`);
-      audioRef.current = newAudio;
-
-      newAudio.onended = () => {
-        setAudioState("idle");
-        setPlayingId(null);
-      };
-
-      newAudio.onerror = () => {
-        setAudioState("idle");
-        setPlayingId(null);
-        setErrorMessage(`Audio not found. Place /audio/${presetId}.wav in public/audio.`);
-      };
-
-      await newAudio.play();
-      if (audioRef.current === newAudio) {
-        setAudioState("playing");
-      } else {
-        newAudio.pause();
-      }
+      await playSource({
+        src: `/audio/${presetId}.wav`,
+        id: presetId,
+        label: `${presetId[0].toUpperCase()}${presetId.slice(1)} preset`,
+      });
     } catch (error) {
       console.error("Playback failed", error);
       setAudioState("idle");
@@ -104,9 +131,11 @@ export default function Home() {
     if (!customInput.trim()) return;
 
     stopCurrentAudio();
+    clearGeneratedUrl();
     setPlayingId("custom");
     setAudioState("idle");
     setIsGenerating(true);
+    setTranscript("");
     setErrorMessage("");
 
     try {
@@ -121,21 +150,19 @@ export default function Home() {
         throw new Error(errorPayload?.detail || errorPayload?.error || "Failed to generate audio. Please try again.");
       }
 
-      const blob = await res.blob();
+      const payload = await res.json();
+      const blob = base64ToBlob(payload.audioBase64, payload.mimeType || "audio/wav");
       const url = URL.createObjectURL(blob);
+      generatedUrlRef.current = url;
 
-      const generatedAudio = new Audio(url);
-      audioRef.current = generatedAudio;
+      await playSource({
+        src: url,
+        id: "custom",
+        label: "Custom session",
+        transcriptText: payload.transcript || "",
+      });
 
-      generatedAudio.onended = () => {
-        setAudioState("idle");
-        setPlayingId(null);
-        URL.revokeObjectURL(url);
-      };
-
-      await generatedAudio.play();
       setIsGenerating(false);
-      setAudioState("playing");
     } catch (error) {
       console.error("Custom playback failed", error);
       setIsGenerating(false);
@@ -258,10 +285,43 @@ export default function Home() {
           {errorMessage && <p className="error-message animate-in">{errorMessage}</p>}
         </section>
 
+        {transcript && (
+          <section className="panel transcript-panel animate-in" aria-labelledby="transcript-heading">
+            <div className="panel-header">
+              <h2 id="transcript-heading">Transcript</h2>
+              <p>Read along while you listen.</p>
+            </div>
+            <div className="transcript-body">{transcript}</div>
+          </section>
+        )}
+
         <footer className="disclaimer animate-in">
           This experience supports relaxation and reflection. It is not a substitute for medical or mental health care.
         </footer>
       </main>
+
+      <div className={`floating-player ${currentAudioSrc ? "is-visible animate-in" : ""}`}>
+        <p className="player-label">{currentAudioLabel || "Now playing"}</p>
+        <audio
+          ref={audioRef}
+          controls
+          onEnded={() => {
+            setAudioState("idle");
+            setPlayingId(null);
+          }}
+          onPause={() => {
+            if (!audioRef.current?.ended) {
+              setAudioState("idle");
+            }
+          }}
+          onPlay={() => setAudioState("playing")}
+          onError={() => {
+            setAudioState("idle");
+            setPlayingId(null);
+            setErrorMessage("Audio not found or unsupported in this browser.");
+          }}
+        />
+      </div>
 
       {isInfoOpen && (
         <div className="modal-overlay" role="presentation" onClick={() => setIsInfoOpen(false)}>
