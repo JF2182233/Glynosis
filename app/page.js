@@ -1,17 +1,20 @@
-﻿"use client";
+"use client";
 
 import { useState, useRef, useEffect } from "react";
 
 const loadingSentences = [
-  "Rewiring your brain...",
-  "Creating the magic words...",
-  "Unlocking your full potential...",
-  "Calming your inner world...",
-  "Composing your transformation...",
-  "Strengthening new pathways...",
-  "Preparing your inner shift...",
-  "Tuning your subconscious...",
-  "Creating your personal ritual..."
+  "Rewiring your inner patterns…",
+  "Composing your personalized session…",
+  "Calming your nervous system…",
+  "Shaping supportive inner language…",
+  "Preparing your next chapter…",
+];
+
+const presets = [
+  { id: "sleep", label: "Sleep" },
+  { id: "smoking", label: "Smoking" },
+  { id: "confidence", label: "Confidence" },
+  { id: "relaxation", label: "Relaxation" },
 ];
 
 export default function Home() {
@@ -21,25 +24,30 @@ export default function Home() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
-  
-  const audioRef = useRef(null);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
 
-  const presets = [
-    { id: "sleep", label: "Sleep" },
-    { id: "smoking", label: "Smoking" },
-    { id: "confidence", label: "Confidence" },
-    { id: "relaxation", label: "Relaxation" }
-  ];
+  const audioRef = useRef(null);
 
   useEffect(() => {
     let interval;
     if (isGenerating) {
       interval = setInterval(() => {
         setLoadingTextIndex((prev) => (prev + 1) % loadingSentences.length);
-      }, 3000);
+      }, 3200);
     }
     return () => clearInterval(interval);
   }, [isGenerating]);
+
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setIsInfoOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const stopCurrentAudio = () => {
     if (audioRef.current) {
@@ -50,6 +58,7 @@ export default function Home() {
 
   const handlePlayPreset = async (presetId) => {
     setErrorMessage("");
+
     if (playingId === presetId && audioState === "playing") {
       stopCurrentAudio();
       setAudioState("idle");
@@ -65,7 +74,7 @@ export default function Home() {
     try {
       const newAudio = new Audio(`/audio/${presetId}.wav`);
       audioRef.current = newAudio;
-      
+
       newAudio.onended = () => {
         setAudioState("idle");
         setPlayingId(null);
@@ -74,28 +83,26 @@ export default function Home() {
       newAudio.onerror = () => {
         setAudioState("idle");
         setPlayingId(null);
-        setErrorMessage(`Audio not found. Place /audio/${presetId}.wav in public folder.`);
+        setErrorMessage(`Audio not found. Place /audio/${presetId}.wav in public/audio.`);
       };
-      
-      newAudio.play().then(() => {
-        if (audioRef.current === newAudio) {
-          setAudioState("playing");
-        } else {
-          newAudio.pause();
-        }
-      }).catch(e => {
-        console.error("Playback failed", e);
-        setAudioState("idle");
-        setPlayingId(null);
-      });
-    } catch (err) {
-      console.error(err);
+
+      await newAudio.play();
+      if (audioRef.current === newAudio) {
+        setAudioState("playing");
+      } else {
+        newAudio.pause();
+      }
+    } catch (error) {
+      console.error("Playback failed", error);
+      setAudioState("idle");
+      setPlayingId(null);
+      setErrorMessage("Playback was interrupted. Please try again.");
     }
   };
 
   const handleCustomSubmit = async () => {
     if (!customInput.trim()) return;
-    
+
     stopCurrentAudio();
     setPlayingId("custom");
     setAudioState("idle");
@@ -106,7 +113,7 @@ export default function Home() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ intent: customInput })
+        body: JSON.stringify({ intent: customInput }),
       });
 
       if (!res.ok) {
@@ -115,114 +122,167 @@ export default function Home() {
 
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
-      
+
       const generatedAudio = new Audio(url);
       audioRef.current = generatedAudio;
-      
+
       generatedAudio.onended = () => {
         setAudioState("idle");
         setPlayingId(null);
         URL.revokeObjectURL(url);
       };
 
-      generatedAudio.play().then(() => {
-        setIsGenerating(false);
-        setAudioState("playing");
-      }).catch(e => {
-        console.error("Custom Playback failed", e);
-        setIsGenerating(false);
-        setAudioState("idle");
-        setPlayingId(null);
-      });
-    } catch (err) {
-      console.error(err);
+      await generatedAudio.play();
+      setIsGenerating(false);
+      setAudioState("playing");
+    } catch (error) {
+      console.error("Custom playback failed", error);
       setIsGenerating(false);
       setPlayingId(null);
-      setErrorMessage("The calm energy was interrupted. Please softly retry your request.");
+      setErrorMessage("The session was interrupted. Please softly retry your request.");
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
+  const handleInputKeyDown = (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
       handleCustomSubmit();
     }
   };
 
   return (
     <>
-      <div className="ambient-bg">
-        <div className="orb orb-1"></div>
-        <div className="orb orb-2"></div>
-        <div className="orb orb-3"></div>
+      <div className="ambient-bg" aria-hidden="true">
+        <div className="orb orb-1" />
+        <div className="orb orb-2" />
+        <div className="orb orb-3" />
       </div>
-      
-      <main className="container animate-in">
-        <h1 className="delay-1">Glynosis</h1>
-        
-        <div className="presets-grid delay-2">
-          {presets.map(preset => {
-            const isActive = playingId === preset.id;
-            const isLoading = isActive && audioState === "loading_preset";
-            return (
-              <button 
-                key={preset.id}
-                className={`preset-btn ${isActive ? 'active btn-is-playing' : ''}`}
-                onClick={() => handlePlayPreset(preset.id)}
-                disabled={isGenerating}
-              >
-                {isLoading ? (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-loader animate-spin"><line x1="12" x2="12" y1="2" y2="6"/><line x1="12" x2="12" y1="18" y2="22"/><line x1="4.93" x2="7.76" y1="4.93" y2="7.76"/><line x1="16.24" x2="19.07" y1="16.24" y2="19.07"/><line x1="2" x2="6" y1="12" y2="12"/><line x1="18" x2="22" y1="12" y2="12"/><line x1="4.93" x2="7.76" y1="19.07" y2="16.24"/><line x1="16.24" x2="19.07" y1="7.76" y2="4.93"/></svg>
-                ) : isActive ? (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-                ) : (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                )}
-                {preset.label}
-              </button>
-            );
-          })}
-        </div>
 
-        {isGenerating ? (
-          <div className="loading-overlay delay-3">
-            <div className="pulse-ring"></div>
-            <p className="loading-text" key={loadingTextIndex}>
-              {loadingSentences[loadingTextIndex]}
-            </p>
-          </div>
-        ) : (
-          <div className="custom-input-container delay-3">
-            <label className="custom-input-label">
-              What would you like to improve in your life? State your mission and a custom self hypnosis tape will be created for you.
-            </label>
-            <div className="custom-input-wrapper">
-              <textarea
-                className="custom-textarea"
-                placeholder="I want to sleep deeply tonight..."
-                value={customInput}
-                onChange={(e) => setCustomInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
-              <button 
-                className={`submit-btn ${customInput.trim().length > 0 ? 'ready' : ''}`}
-                onClick={handleCustomSubmit}
-                aria-label="Generate audio"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-              </button>
+      <main className="shell animate-in">
+        <nav className="top-nav" aria-label="Primary">
+          <div className="brand-lockup">
+            <span className="brand-mark" aria-hidden="true" />
+            <div>
+              <p className="brand-title">Glynosis</p>
+              <p className="brand-subtitle">Private audio rituals</p>
             </div>
           </div>
-        )}
+          <button className="ghost-btn" onClick={() => setIsInfoOpen(true)}>
+            How it works
+          </button>
+        </nav>
 
-        {errorMessage && (
-          <p className="error-message animate-in">{errorMessage}</p>
-        )}
+        <header className="hero">
+          <p className="eyebrow">Self-hypnosis studio</p>
+          <h1>Feel calmer, clearer, and more in control.</h1>
+          <p className="hero-copy">
+            Choose a guided preset or generate a custom session tailored to your current goal.
+          </p>
+        </header>
 
-        <footer className="disclaimer animate-in delay-3">
-          This experience is for relaxation and personal reflection. It is not a substitute for medical or mental health care.
+        <section className="panel" aria-labelledby="presets-heading">
+          <div className="panel-header">
+            <h2 id="presets-heading">Quick sessions</h2>
+            <p>Instant playback for common intentions.</p>
+          </div>
+
+          <div className="presets-grid">
+            {presets.map((preset) => {
+              const isActive = playingId === preset.id;
+              const isLoading = isActive && audioState === "loading_preset";
+
+              return (
+                <button
+                  key={preset.id}
+                  className={`preset-btn ${isActive ? "active" : ""}`}
+                  onClick={() => handlePlayPreset(preset.id)}
+                  disabled={isGenerating}
+                  aria-pressed={isActive}
+                >
+                  <span className="preset-icon" aria-hidden="true">
+                    {isLoading ? "◌" : isActive ? "▮▮" : "▶"}
+                  </span>
+                  <span>{preset.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="panel" aria-labelledby="custom-heading">
+          <div className="panel-header">
+            <h2 id="custom-heading">Create your own</h2>
+            <p>Tell us what you want to shift right now.</p>
+          </div>
+
+          {isGenerating ? (
+            <div className="loading-overlay" role="status" aria-live="polite">
+              <div className="pulse-ring" />
+              <p className="loading-text" key={loadingTextIndex}>
+                {loadingSentences[loadingTextIndex]}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="custom-input-wrapper">
+                <label className="sr-only" htmlFor="intent">
+                  What would you like to improve in your life?
+                </label>
+                <textarea
+                  id="intent"
+                  className="custom-textarea"
+                  placeholder="I want to sleep deeply tonight and wake up refreshed."
+                  value={customInput}
+                  onChange={(event) => setCustomInput(event.target.value)}
+                  onKeyDown={handleInputKeyDown}
+                />
+
+                <button
+                  className={`submit-btn ${customInput.trim().length > 0 ? "ready" : ""}`}
+                  onClick={handleCustomSubmit}
+                  aria-label="Generate custom audio"
+                >
+                  Generate
+                </button>
+              </div>
+
+              {customInput.trim().length === 0 && !errorMessage && (
+                <div className="empty-state">
+                  <p>Start with a short intention. Example: “I want to feel calm before sleep.”</p>
+                </div>
+              )}
+            </>
+          )}
+
+          {errorMessage && <p className="error-message animate-in">{errorMessage}</p>}
+        </section>
+
+        <footer className="disclaimer animate-in">
+          This experience supports relaxation and reflection. It is not a substitute for medical or mental health care.
         </footer>
       </main>
+
+      {isInfoOpen && (
+        <div className="modal-overlay" role="presentation" onClick={() => setIsInfoOpen(false)}>
+          <div
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="modal-title">How Glynosis works</h2>
+            <ul>
+              <li>Choose a preset for immediate playback.</li>
+              <li>Or write your intention for a personalized session.</li>
+              <li>Audio is generated and played directly in your browser.</li>
+            </ul>
+            <button className="ghost-btn" onClick={() => setIsInfoOpen(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
