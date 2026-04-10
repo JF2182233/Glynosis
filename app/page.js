@@ -17,6 +17,12 @@ const presets = [
   { id: "relaxation", label: "Relaxation" },
 ];
 
+const howItWorksSteps = [
+  { title: "Enter your goal", copy: "Describe what you want to shift right now.", icon: "📱" },
+  { title: "AI generates script", copy: "A unique audio script is crafted for your intention.", icon: "🧠" },
+  { title: "Relax and listen", copy: "Press play and let the session guide your focus.", icon: "🎧" },
+];
+
 export default function Home() {
   const [hasEnteredFlow, setHasEnteredFlow] = useState(false);
   const [playingId, setPlayingId] = useState(null);
@@ -208,6 +214,11 @@ export default function Home() {
           <p className="hero-copy">
             Choose a guided preset or generate a custom session tailored to your current goal.
           </p>
+          <div className="hero-chip-row" aria-label="Core value">
+            <span>Goal-oriented scripts</span>
+            <span>Soft voice guidance</span>
+            <span>Flow in minutes</span>
+          </div>
         </header>
 
         <section className="panel" aria-labelledby="presets-heading">
@@ -310,6 +321,24 @@ export default function Home() {
             <p className="landing-copy">
               Just set your goal and Glynosis will rewire your mind to achieve it!
             </p>
+            <div className="landing-how-it-works" aria-label="How it works">
+              <p>How it works</p>
+              <ol>
+                {howItWorksSteps.map((step, index) => (
+                  <li key={step.title}>
+                    <span className="landing-step-icon" aria-hidden="true">
+                      {step.icon}
+                    </span>
+                    <div>
+                      <strong>
+                        {index + 1}. {step.title}
+                      </strong>
+                      <span>{step.copy}</span>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
             <div className="landing-chips" aria-label="Benefits">
               <span>⚡ Personalized scripts</span>
               <span>🎧 Instant audio playback</span>
