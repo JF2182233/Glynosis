@@ -304,11 +304,17 @@ export default function Home() {
       ) : (
         <section className="landing-screen animate-in" role="dialog" aria-labelledby="landing-title" aria-modal="true">
           <div className="landing-card">
+            <div className="landing-glow" aria-hidden="true" />
             <p className="landing-brand">Glynosis</p>
             <h1 id="landing-title">Your path to self improvement through hypnosis and meditation.</h1>
             <p className="landing-copy">
               Just set your goal and Glynosis will rewire your mind to achieve it!
             </p>
+            <div className="landing-chips" aria-label="Benefits">
+              <span>⚡ Personalized scripts</span>
+              <span>🎧 Instant audio playback</span>
+              <span>🌙 Calm in minutes</span>
+            </div>
             <button className="flowstate-btn" onClick={() => setHasEnteredFlow(true)}>
               Enter flowstate
             </button>
