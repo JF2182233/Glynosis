@@ -117,7 +117,8 @@ export default function Home() {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to generate audio. Please try again.");
+        const errorPayload = await res.json().catch(() => null);
+        throw new Error(errorPayload?.detail || errorPayload?.error || "Failed to generate audio. Please try again.");
       }
 
       const blob = await res.blob();
@@ -139,7 +140,7 @@ export default function Home() {
       console.error("Custom playback failed", error);
       setIsGenerating(false);
       setPlayingId(null);
-      setErrorMessage("The session was interrupted. Please softly retry your request.");
+      setErrorMessage(error instanceof Error ? error.message : "The session was interrupted. Please softly retry your request.");
     }
   };
 
