@@ -36,7 +36,6 @@ For relaxation-related requests:
 For custom user requests:
 - infer the underlying emotional need and write the script around it`;
 
-
 function pcmToWav(pcmBuffer, sampleRate = 24000, channels = 1, bitsPerSample = 16) {
   const blockAlign = (channels * bitsPerSample) / 8;
   const byteRate = sampleRate * blockAlign;
@@ -59,6 +58,27 @@ function pcmToWav(pcmBuffer, sampleRate = 24000, channels = 1, bitsPerSample = 1
   pcmBuffer.copy(buffer, 44);
 
   return buffer;
+}
+
+function parseMimeConfig(mimeType = "") {
+  const normalized = mimeType.toLowerCase();
+
+  const readIntParam = (paramName, fallback) => {
+    const match = normalized.match(new RegExp(`${paramName}\\s*=\\s*(\\d+)`));
+    return Number.parseInt(match?.[1] ?? "", 10) || fallback;
+  };
+
+  return {
+    mimeType: normalized,
+    sampleRate: readIntParam("rate", 24000),
+    channels: readIntParam("channels", 1),
+    bitsPerSample: readIntParam("bits", 16),
+  };
+}
+
+function isRawPcmMime(mimeType = "") {
+  const normalized = mimeType.toLowerCase();
+  return ["audio/l16", "audio/pcm", "audio/raw", "audio/linear16"].some((token) => normalized.includes(token));
 }
 
 function jsonError(message, status, detail) {
@@ -140,14 +160,14 @@ export async function POST(req) {
     }
 
     const rawAudioBuffer = Buffer.from(inlineData.data, "base64");
-    const mimeType = inlineData.mimeType || "audio/L16;rate=24000";
-
-    const isPcm = mimeType.toLowerCase().includes("audio/l16") || mimeType.toLowerCase().includes("audio/pcm");
-    const audioBuffer = isPcm ? pcmToWav(rawAudioBuffer) : rawAudioBuffer;
+    const mimeDetails = parseMimeConfig(inlineData.mimeType || "audio/L16;rate=24000");
+    const audioBuffer = isRawPcmMime(mimeDetails.mimeType)
+      ? pcmToWav(rawAudioBuffer, mimeDetails.sampleRate, mimeDetails.channels, mimeDetails.bitsPerSample)
+      : rawAudioBuffer;
 
     return NextResponse.json({
       transcript: script,
-      mimeType: isPcm ? "audio/wav" : mimeType,
+      mimeType: isRawPcmMime(mimeDetails.mimeType) ? "audio/wav" : mimeDetails.mimeType,
       audioBase64: audioBuffer.toString("base64"),
     });
   } catch (error) {
