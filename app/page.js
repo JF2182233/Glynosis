@@ -18,6 +18,7 @@ const presets = [
 ];
 
 export default function Home() {
+  const [hasEnteredFlow, setHasEnteredFlow] = useState(false);
   const [playingId, setPlayingId] = useState(null);
   const [audioState, setAudioState] = useState("idle");
   const [customInput, setCustomInput] = useState("");
@@ -186,6 +187,7 @@ export default function Home() {
         <div className="orb orb-3" />
       </div>
 
+      {hasEnteredFlow ? (
       <main className="shell animate-in">
         <nav className="top-nav" aria-label="Primary">
           <div className="brand-lockup">
@@ -299,6 +301,20 @@ export default function Home() {
           This experience supports relaxation and reflection. It is not a substitute for medical or mental health care.
         </footer>
       </main>
+      ) : (
+        <section className="landing-screen animate-in" role="dialog" aria-labelledby="landing-title" aria-modal="true">
+          <div className="landing-card">
+            <p className="landing-brand">Glynosis</p>
+            <h1 id="landing-title">Your path to self improvement through hypnosis and meditation.</h1>
+            <p className="landing-copy">
+              Just set your goal and Glynosis will rewire your mind to achieve it!
+            </p>
+            <button className="flowstate-btn" onClick={() => setHasEnteredFlow(true)}>
+              Enter flowstate
+            </button>
+          </div>
+        </section>
+      )}
 
       <div className={`floating-player ${currentAudioSrc ? "is-visible animate-in" : ""}`}>
         <p className="player-label">{currentAudioLabel || "Now playing"}</p>
@@ -322,6 +338,16 @@ export default function Home() {
           }}
         />
       </div>
+
+      {isGenerating && (
+        <aside className="generation-popup animate-in" role="status" aria-live="polite">
+          <p className="generation-popup-title">Advanced AI is perfecting your script ✨</p>
+          <p>
+            It&apos;s crafting something that deeply connects you with your goal. This can take up to 90 seconds, so
+            just relax.
+          </p>
+        </aside>
+      )}
 
       {isInfoOpen && (
         <div className="modal-overlay" role="presentation" onClick={() => setIsInfoOpen(false)}>
